@@ -17,7 +17,6 @@ br = "\u255D"
 headcol = "cyan"
 bodycol = "white"
 osname = os.name
-logo = __import__(f"logo.{osname}", fromlist=[None])
 
 match osname:
 	case "nt":
@@ -26,6 +25,13 @@ match osname:
 	case "posix":
 		def clear(): 
 			os.system("clear")
+
+osname2 = platform.system()
+if osname2 == "Linux":
+	distroname = platform.freedesktop_os_release()
+	logo = __import__(f"logo.{str(distroname).lower().replace(" ", "_")}", fromlist=[None])
+else:
+	logo = __import__(f"logo.{str(osname2).lower()}", fromlist=[None])
 
 vtb = [[("", "white", None)]]
 def buffer(text, fg="white", bg=None):
@@ -124,7 +130,7 @@ def resetinfo(mode = "main"):
 				]
 				if i%4 == 3:
 					info2[-1] += [
-						(" |", bodycol, None)
+						("|", bodycol, None)
 					]
 					info2.append([("", "white", None)])
 					info2.append([("", "white", None)])
@@ -136,7 +142,7 @@ def resetinfo(mode = "main"):
 				]
 				if i%9 == 8:
 					info2[-1] += [
-						(" |", bodycol, None)
+						("|", bodycol, None)
 					]
 					info2.append([("", "white", None)])
 					info2.append([("", "white", None)])
