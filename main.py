@@ -17,14 +17,17 @@ br = "\u255D"
 headcol = "cyan"
 bodycol = "white"
 osname = os.name
+if osname == "nt":
+	import ctypes
+	import ctypes.wintypes
+	stdouthandle = ctypes.windll.kernel32.GetStdHandle(-11)
+	mode = ctypes.wintypes.DWORD()
+	ctypes.windll.kernel32.GetConsoleMode(stdouthandle, sys.modules["ctypes"].byref(mode))
+	ctypes.windll.kernel32.SetConsoleMode(stdouthandle, mode.value | 0x0004)
 
-match osname:
-	case "nt":
-		def clear():
-			subprocess.run("cls", shell=True)
-	case "posix":
-		def clear(): 
-			os.system("clear")
+def clear():
+	sys.stdout.write("\x1b[2J\x1b[3J\x1b[1;1H")
+	sys.stdout.flush()
 
 osname2 = platform.system()
 if osname2 == "Linux":
@@ -48,7 +51,7 @@ def newline():
 
 def printvtb(end="^C  Exit     "):
 	global vtb, col, lin, tl, top, tr, bl, br, side
-	buf = ""
+	buf = "1b[2J\x1b[3J\x1b[1;1H"
 	buf += tl + (col-2)*top + tr + "\n"
 	lins = 0
 	for i in vtb:
@@ -74,7 +77,6 @@ def printvtb(end="^C  Exit     "):
 
 	buf += side + "  " + colored(end, color="green", on_color=None) + " "*(col-4-len(end)) + side + "\n"
 	buf += bl + (col-2)*top + br
-	clear()
 	sys.stdout.write(buf)
 	sys.stdout.flush()
 
