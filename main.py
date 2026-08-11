@@ -40,7 +40,7 @@ def newline():
 	global vtb
 	vtb.append([("", "white", None)])
 
-def printvtb(end="^C  Exit     ^M  Main Menu     ^G  GPU Monitor "):
+def printvtb(end="^C  Exit     "):
 	global vtb, col, lin, tl, top, tr, bl, br, side
 	buf = ""
 	buf += tl + (col-2)*top + tr + "\n"
@@ -66,22 +66,26 @@ def printvtb(end="^C  Exit     ^M  Main Menu     ^G  GPU Monitor "):
 		for i in range(lin - 3 - lins):
 			buf += side + (col-2)*" " + side + "\n"
 
-	buf += side + "  " + colored(end, "green", None) + " "*(col-4-len(end)) + side + "\n"
+	buf += side + "  " + colored(end, color="green", on_color=None) + " "*(col-4-len(end)) + side + "\n"
 	buf += bl + (col-2)*top + br
 	clear()
 	sys.stdout.write(buf)
 	sys.stdout.flush()
 
-ram = psutil.virtual_memory()
+coreuse = psutil.cpu_percent(interval=0.4)
 
 def resetinfo(mode = "main"):
+	global cpuuse, col
 	if mode == "main":
+		coreuse = psutil.cpu_percent(interval=None, percpu=True)
 		cpuuse = psutil.cpu_percent(interval=0.4)
 		battery = psutil.sensors_battery()
+		ram = psutil.virtual_memory()
+		threadcount = psutil.cpu_count(logical=True)
 		info = [
 			[("CPU: ", headcol, None), (f"{platform.processor()}", bodycol, None)],
 			[("Physical Cores: ", headcol, None), (f"{psutil.cpu_count(logical=False)}", bodycol, None)],
-			[("Logical Cores: ", headcol, None), (f"{psutil.cpu_count(logical=True)}", bodycol, None)],
+			[("Logical Cores: ", headcol, None), (f"{threadcount}", bodycol, None)],
 			[("Total CPU Usage: ", headcol, None)],
 			[("\u2589"*int(cpuuse//5), headcol, None), 
 			 ("\u2589"*int(20-(cpuuse//5)), bodycol, None), 
@@ -102,11 +106,45 @@ def resetinfo(mode = "main"):
 			 ("\u2589"*int(20-(battery.percent//5)), bodycol, None), 
 			 (f"  {" " if battery.percent < 10 else ""}{battery.percent}%", bodycol, None)],
 		]
-		return info
 
-info = resetinfo()
+		info2 = [
+			[("", "white", None)],
+			[("Logical Processor Usages: ", headcol, None)],
+			[("", "white", None)],
+			[("", "white", None)]
+		]
 
-info2 = []
+		for i, coreusage in enumerate(coreuse):
+			if col >= 124:
+				info2[-1] += [
+					("| ", bodycol, None),
+					("\u2589"*int(coreusage//5), headcol, None), 
+					("\u2589"*int(20-(coreusage//5)), bodycol, None), 
+					(f" {" " if coreusage < 10 else ""}{coreusage}% ", bodycol, None)
+				]
+				if i%4 == 3:
+					info2[-1] += [
+						(" |", bodycol, None)
+					]
+					info2.append([("", "white", None)])
+					info2.append([("", "white", None)])
+
+			else:
+				info2[-1] += [
+					("| ", bodycol, None),
+					(f"{" " if coreusage < 10 else ""}{coreusage}% ", bodycol, None)
+				]
+				if i%9 == 8:
+					info2[-1] += [
+						(" |", bodycol, None)
+					]
+					info2.append([("", "white", None)])
+					info2.append([("", "white", None)])
+
+
+		return info, info2
+
+info, info2 = resetinfo()
 
 printvtb()
 try:
@@ -120,7 +158,7 @@ try:
 
 		oldinfo = copy.deepcopy(info)
 		ram = psutil.virtual_memory()
-		info = resetinfo()
+		info, info2 = resetinfo()
 
 		clearvtb()
 		for i, j in zip_longest(logo.logo, info, fillvalue=[(" "*logo.padding, "white", None)]):
@@ -131,6 +169,11 @@ try:
 
 			for k in j:
 				buffer(k[0], k[1], k[2])
+
+		for i in info2:
+			newline()
+			for j in i:
+				buffer(j[0], j[1], j[2])
 
 		if oldcol != col or oldlin != lin or info != oldinfo:
 			printvtb()
