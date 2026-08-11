@@ -1,6 +1,6 @@
 padding = 28
 space = (" ", "white", None)
-space2 = ("  ", "white", None)
+space2 = ("   ", "white", None)
 
 logo = [
 	[("\u2588"*13, "red", "on_red"), space, ("\u2588"*13, "green", "on_green"), space2],
