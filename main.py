@@ -1,6 +1,7 @@
 import shutil, os, psutil, copy, sys, subprocess, platform, math
 from termcolor import colored
 from itertools import zip_longest
+from pynput import keyboard
 
 size = shutil.get_terminal_size()
 
@@ -36,6 +37,7 @@ if osname2 == "Linux":
 else:
 	logo = __import__(f"logo.{str(osname2).lower()}", fromlist=[None])
 
+
 vtb = [[("", "white", None)]]
 def buffer(text, fg="white", bg=None):
 	global vtb
@@ -49,7 +51,7 @@ def newline():
 	global vtb
 	vtb.append([("", "white", None)])
 
-def printvtb(end="^C  Exit     "):
+def printvtb(end="^C  Exit     ^M  Main Menu     ^D  Disk Menu"):
 	global vtb, col, lin, tl, top, tr, bl, br, side
 	buf = "1b[2J\x1b[3J\x1b[1;1H"
 	buf += tl + (col-2)*top + tr + "\n"
@@ -154,10 +156,67 @@ def resetinfo(mode = "main"):
 					info2.append([("", "white", None)])
 					info2.append([("", "white", None)])
 
+		return info, info2
+
+
+	elif mode == "disk":
+		info = [
+			 [("Connected Drives: ", headcol, None)],
+			 [("", "white", None)]
+		]
+		info2 = [
+			 [("", "white", None)],
+			 [("", "white", None)],
+			 [("-"*(16+16+57+4), "white", None)],
+			 [("|" + "Partition".center(16) + "|" + "Mountpoint".center(16) + "|" + "Capacity".center(57) + "|", "white", None)]
+		]
+		parts = psutil.disk_partitions(all=False)
+		for i in parts:
+			try:
+				info.append([(f"{i.device} ", headcol, None), (f"{i.mountpoint}", bodycol, None), (f" ({i.fstype})", headcol, None)])
+			except:
+				pass
+
+		for j in range(len(parts)):
+			try:
+				i = parts[j]
+				usage = psutil.disk_usage(i.mountpoint)
+				info2.append([
+			 			("|", "white", None),
+						(f"{str(i.device).center(16)}", headcol, None),
+			 			("|", "white", None),
+						(f"{str(i.mountpoint).center(16)}", headcol, None),
+			 			("| ", "white", None),
+						("\u2589"*int(usage.percent//5), headcol, None), 
+						("\u2589"*int(20-(usage.percent//5)), bodycol, None), 
+						(f"{usage.used / (1024**3):.2f} / {usage.total / (1024**3):.2f} GB ({" " if usage.percent < 10 else ""}{usage.percent}%)".rjust(35), headcol, None),
+			 			(" |", "white", None)
+					])
+
+			except:
+				pass
+
+		info2.append([("-"*(16+16+57+4), "white", None)])
 
 		return info, info2
 
-info, info2 = resetinfo()
+
+mode = "main"
+info, info2 = resetinfo(mode)
+
+def tomain():
+	global mode
+	mode = "main"
+
+def todisk():
+	global mode
+	mode = "disk"
+
+h = keyboard.GlobalHotKeys({
+		'<ctrl>+m': tomain,
+		'<ctrl>+d': todisk
+	})
+h.start()
 
 printvtb()
 try:
@@ -171,7 +230,7 @@ try:
 
 		oldinfo = copy.deepcopy(info)
 		ram = psutil.virtual_memory()
-		info, info2 = resetinfo()
+		info, info2 = resetinfo(mode)
 
 		clearvtb()
 		for i, j in zip_longest(logo.logo, info, fillvalue=[(" "*logo.padding, "white", None)]):
