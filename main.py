@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import shutil, os, psutil, copy, sys, subprocess, platform, math
 from termcolor import colored
 from itertools import zip_longest
@@ -33,7 +34,7 @@ def clear():
 osname2 = platform.system()
 if osname2 == "Linux":
 	distroname = platform.freedesktop_os_release()
-	logo = __import__(f"logo.{str(distroname).lower().replace(" ", "_")}", fromlist=[None])
+	logo = __import__(f"logo.{str(distroname["NAME"]).lower().replace(" ", "_")}", fromlist=[None])
 else:
 	logo = __import__(f"logo.{str(osname2).lower()}", fromlist=[None])
 
