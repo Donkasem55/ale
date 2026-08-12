@@ -122,6 +122,11 @@ def resetinfo(mode = "main"):
 			[("", "white", None)]
 		]
 
+		if col >= 124:
+			enu = (col - 7) // 29
+		else:
+			enu = (col - 7) // 8
+
 		for i, coreusage in enumerate(coreuse):
 			if col >= 124:
 				info2[-1] += [
@@ -130,7 +135,7 @@ def resetinfo(mode = "main"):
 					("\u2589"*int(20-(coreusage//5)), bodycol, None), 
 					(f" {" " if coreusage < 10 else ""}{coreusage}% ", bodycol, None)
 				]
-				if i%4 == 3:
+				if i%enu == enu-1:
 					info2[-1] += [
 						("|", bodycol, None)
 					]
@@ -142,7 +147,7 @@ def resetinfo(mode = "main"):
 					("| ", bodycol, None),
 					(f"{" " if coreusage < 10 else ""}{coreusage}% ", bodycol, None)
 				]
-				if i%9 == 8:
+				if i%enu == enu-1:
 					info2[-1] += [
 						("|", bodycol, None)
 					]
