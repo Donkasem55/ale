@@ -35,9 +35,11 @@ def clear():
 osname2 = platform.system()
 if osname2 == "Linux":
 	distroname = platform.freedesktop_os_release()
+	osinfo = {"name": distroname["PRETTY_NAME"], "version": distroname["VERSION_CODENAME"], "arch": platform.machine()}
 	logo = __import__(f"logo.{str(distroname["NAME"]).lower().replace(" ", "_")}", fromlist=[None])
 else:
 	logo = __import__(f"logo.{str(osname2).lower()}", fromlist=[None])
+	osinfo = {"name": osname2, "version": platform.release(), "arch": platform.machine()}
 
 
 vtb = [[("", "white", None)]]
@@ -53,7 +55,7 @@ def newline():
 	global vtb
 	vtb.append([("", "white", None)])
 
-def printvtb(end="^C  Exit     M  Main Menu     D  Disk Menu"):
+def printvtb(end="^C  Exit     M  Main Menu     D  Disk Menu     S  Machine Information"):
 	global vtb, col, lin, tl, top, tr, bl, br, side
 	buf = "1b[2J\x1b[3J\x1b[1;1H"
 	buf += tl + (col-2)*top + tr + "\n"
@@ -169,8 +171,8 @@ def resetinfo(mode = "main"):
 		info2 = [
 			 [("", "white", None)],
 			 [("", "white", None)],
-			 [("-"*(16+16+57+4), "white", None)],
-			 [("|" + "Partition".center(16) + "|" + "Mountpoint".center(16) + "|" + "Capacity".center(57) + "|", "white", None)]
+			 [("┌" + "─"*16 + "┬" + "─"*16 + "┬" + "─"*57 + "┐", "white", None)],
+			 [("│" + "Partition".center(16) + "│" + "Mountpoint".center(16) + "│" + "Capacity".center(57) + "│", "white", None)]
 		]
 		parts = psutil.disk_partitions(all=False)
 		for i in parts:
@@ -184,22 +186,35 @@ def resetinfo(mode = "main"):
 				i = parts[j]
 				usage = psutil.disk_usage(i.mountpoint)
 				info2.append([
-			 			("|", "white", None),
+			 			("│", "white", None),
 						(f"{str(i.device).center(16)}", headcol, None),
-			 			("|", "white", None),
+			 			("│", "white", None),
 						(f"{str(i.mountpoint).center(16)}", headcol, None),
-			 			("| ", "white", None),
+			 			("│ ", "white", None),
 						("\u2589"*int(usage.percent//5), headcol, None), 
 						("\u2589"*int(20-(usage.percent//5)), bodycol, None), 
 						(f"{usage.used / (1024**3):.2f} / {usage.total / (1024**3):.2f} GB ({" " if usage.percent < 10 else ""}{usage.percent}%)".rjust(35), headcol, None),
-			 			(" |", "white", None)
+			 			(" │", "white", None)
 					])
 
 			except:
 				pass
 
-		info2.append([("-"*(16+16+57+4), "white", None)])
+		info2.append([("└" + "─"*16 + "┴" + "─"*16 + "┴" + "─"*57 + "┘", "white", None)])
 
+		return info, info2
+
+	elif mode == "machine":
+		info = [
+			[("Architecture: ", headcol, None), (f"{osinfo["arch"]}", bodycol, None)],
+			[("OS: ", headcol, None), (f"{osinfo["name"]}", bodycol, None)],
+			[("OS Version: ", headcol, None), (f"{osinfo["version"]}", bodycol, None)],
+			[("OS Release (Full): ", headcol, None), (f"{platform.platform()}", bodycol, None)],
+			[("", headcol, None)],
+			[("Python Version: ", headcol, None), (f"{sys.version.split(" ")[0]}", bodycol, None)],
+			[("Python Release: ", headcol, None), (f"{sys.version}", bodycol, None)]
+		]
+		info2 = [[("", headcol, None)]]
 		return info, info2
 
 
@@ -218,6 +233,11 @@ def keyread():
 				mode = "disk"
 			elif key.lower() == "m":
 				mode = "main"
+			elif key.lower() == "s":
+				mode = "machine"
+			elif key.lower() == "c":
+				sys.exit(0)
+
 	except KeyboardInterrupt:
 		sys.exit(0)
 
