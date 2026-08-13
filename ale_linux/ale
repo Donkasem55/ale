@@ -35,7 +35,8 @@ def clear():
 osname2 = platform.system()
 if osname2 == "Linux":
 	distroname = platform.freedesktop_os_release()
-	osinfo = {"name": distroname["PRETTY_NAME"], "version": distroname["VERSION_CODENAME"], "arch": platform.machine()}
+	info = platform.uname()
+	osinfo = {"name": distroname["PRETTY_NAME"], "version": info.release, "arch": platform.machine()}
 	logo = __import__(f"logo.{str(distroname["NAME"]).lower().replace(" ", "_")}", fromlist=[None])
 else:
 	logo = __import__(f"logo.{str(osname2).lower()}", fromlist=[None])
