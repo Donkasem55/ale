@@ -2,7 +2,8 @@
 import shutil, os, psutil, copy, sys, subprocess, platform, math
 from termcolor import colored
 from itertools import zip_longest
-from pynput import keyboard
+import readchar
+import threading
 
 size = shutil.get_terminal_size()
 
@@ -52,7 +53,7 @@ def newline():
 	global vtb
 	vtb.append([("", "white", None)])
 
-def printvtb(end="^C  Exit     ^M  Main Menu     ^D  Disk Menu"):
+def printvtb(end="^C  Exit     M  Main Menu     D  Disk Menu"):
 	global vtb, col, lin, tl, top, tr, bl, br, side
 	buf = "1b[2J\x1b[3J\x1b[1;1H"
 	buf += tl + (col-2)*top + tr + "\n"
@@ -205,52 +206,59 @@ def resetinfo(mode = "main"):
 mode = "main"
 info, info2 = resetinfo(mode)
 
-def tomain():
-	global mode
-	mode = "main"
-
-def todisk():
-	global mode
-	mode = "disk"
-
-h = keyboard.GlobalHotKeys({
-		'<ctrl>+m': tomain,
-		'<ctrl>+d': todisk
-	})
-h.start()
-
 printvtb()
-try:
-	while True:
-		oldcol = col
-		oldlin = lin
 
-		size = shutil.get_terminal_size()
-		col = size.columns
-		lin = size.lines
+def keyread():
+	global mode
+	try:
+		while True:
+			key = readchar.readkey()
 
-		oldinfo = copy.deepcopy(info)
-		ram = psutil.virtual_memory()
-		info, info2 = resetinfo(mode)
+			if key.lower() == "d":
+				mode = "disk"
+			elif key.lower() == "m":
+				mode = "main"
+	except KeyboardInterrupt:
+		sys.exit(0)
 
-		clearvtb()
-		for i, j in zip_longest(logo.logo, info, fillvalue=[(" "*logo.padding, "white", None)]):
-			newline()
+def main():
+	global col, lin, info, mode
+	thread = threading.Thread(target=keyread, daemon=True)
+	thread.start()
+	try:
+		while True:
+			oldcol = col
+			oldlin = lin
 
-			for k in i:
-				buffer(k[0], k[1], k[2])
+			size = shutil.get_terminal_size()
+			col = size.columns
+			lin = size.lines
 
-			for k in j:
-				buffer(k[0], k[1], k[2])
+			oldinfo = copy.deepcopy(info)
+			ram = psutil.virtual_memory()
+			info, info2 = resetinfo(mode)
 
-		for i in info2:
-			newline()
-			for j in i:
-				buffer(j[0], j[1], j[2])
+			clearvtb()
+			for i, j in zip_longest(logo.logo, info, fillvalue=[(" "*logo.padding, "white", None)]):
+				newline()
 
-		if oldcol != col or oldlin != lin or info != oldinfo:
-			printvtb()
+				for k in i:
+					buffer(k[0], k[1], k[2])
 
-except KeyboardInterrupt:
-	clear()
-	sys.exit(0)
+				for k in j:
+					buffer(k[0], k[1], k[2])
+
+			for i in info2:
+				newline()
+				for j in i:
+					buffer(j[0], j[1], j[2])
+
+			if oldcol != col or oldlin != lin or info != oldinfo:
+				printvtb()
+
+	except KeyboardInterrupt:
+		clear()
+		sys.exit(0)
+
+if __name__ == "__main__":
+	main()
