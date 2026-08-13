@@ -128,13 +128,13 @@ def resetinfo(mode = "main"):
 			[("", "white", None)]
 		]
 
-		if col >= 124:
+		if col >= 96:
 			enu = (col - 7) // 29
 		else:
 			enu = (col - 7) // 8
 
 		for i, coreusage in enumerate(coreuse):
-			if col >= 124:
+			if col >= 96:
 				info2[-1] += [
 					("| ", bodycol, None),
 					("\u2589"*int(coreusage//5), headcol, None), 
