@@ -42,6 +42,14 @@ else:
 	logo = __import__(f"logo.{str(osname2).lower()}", fromlist=[None])
 	osinfo = {"name": osname2, "version": platform.release(), "arch": platform.machine()}
 
+try:
+	headcol = logo.color
+except:
+	pass
+try:
+	bodycol = logo.color_empty
+except:
+	pass
 
 vtb = [[("", "white", None)]]
 def buffer(text, fg="white", bg=None):
